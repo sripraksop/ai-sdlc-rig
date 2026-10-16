@@ -1,0 +1,100 @@
+# ASDLC AMS (Application Maintenance & Support) team rig
+#
+# Seats (address = {pod}-{member}@{rig}):
+#   mgmt-pm@asdlc           Project Manager - the ONLY seat the human talks to; triage, delegation, human gates
+#   delivery-designer@asdlc UI/UX + solution designer
+#   delivery-reviewer@asdlc Design + code reviewer (Codex)
+#   delivery-dev@asdlc      Developer - fixes, enhancements, root cause
+#   delivery-qa@asdlc       QA - Playwright automation, regression, sign-off
+#
+# Flow: PM -> Designer -> Reviewer (design) -> Dev -> Reviewer (code)
+#       -> PM -> HUMAN CODE REVIEW -> PM -> QA -> PM -> release
+version: "0.2"
+name: asdlc
+
+pods:
+  - id: mgmt
+    label: Management
+    members:
+      - id: pm
+        agent_ref: "local:agents/pm"
+        profile: default
+        runtime: claude-code
+        cwd: "."
+        restore_policy: resume_if_possible
+    edges: []
+    continuity_policy:
+      enabled: true
+      sync_triggers: [pre_compaction, pre_shutdown, manual, milestone]
+
+  - id: delivery
+    label: Delivery
+    members:
+      - id: designer
+        agent_ref: "local:agents/designer"
+        profile: default
+        runtime: claude-code
+        cwd: "."
+        restore_policy: resume_if_possible
+      - id: reviewer
+        agent_ref: "local:agents/reviewer"
+        profile: default
+        runtime: codex          # independent model for design + code review
+        cwd: "."
+        restore_policy: resume_if_possible
+      - id: dev
+        agent_ref: "local:agents/dev"
+        profile: default
+        runtime: claude-code
+        cwd: "."
+        restore_policy: resume_if_possible
+      - id: qa
+        agent_ref: "local:agents/qa"
+        profile: default
+        runtime: claude-code
+        cwd: "."
+        restore_policy: resume_if_possible
+    edges:
+      # pod-local edges use plain member IDs
+      - kind: collaborates_with   # design review loop
+        from: designer
+        to: reviewer
+      - kind: collaborates_with   # code review loop
+        from: dev
+        to: reviewer
+      - kind: can_observe         # reviewer reads the design when reviewing code
+        from: reviewer
+        to: designer
+      - kind: collaborates_with   # QA-FAIL goes back to dev
+        from: qa
+        to: dev
+    continuity_policy:
+      enabled: true
+      sync_triggers: [pre_compaction, pre_shutdown, manual, milestone]
+
+# cross-pod edges use pod.member IDs
+edges:
+  - kind: delegates_to
+    from: mgmt.pm
+    to: delivery.designer
+  - kind: delegates_to
+    from: mgmt.pm
+    to: delivery.reviewer
+  - kind: delegates_to
+    from: mgmt.pm
+    to: delivery.dev
+  - kind: delegates_to
+    from: mgmt.pm
+    to: delivery.qa
+  - kind: escalates_to
+    from: delivery.designer
+    to: mgmt.pm
+  - kind: escalates_to
+    from: delivery.reviewer
+    to: mgmt.pm
+  - kind: escalates_to
+    from: delivery.dev
+    to: mgmt.pm
+  - kind: escalates_to
+    from: delivery.qa
+    to: mgmt.pm

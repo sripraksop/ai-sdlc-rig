@@ -1,0 +1,33 @@
+name: ams-pm
+version: "1.0"
+description: ASDLC AMS Project Manager - sole human contact, triage, delegation, human code-review gate
+
+defaults:
+  runtime: claude-code
+  lifecycle:
+    execution_mode: interactive_resident
+    compaction_strategy: default-compaction
+    restore_policy: resume_if_possible
+
+profiles:
+  default:
+    summary: Lead seat; the only seat the human talks to
+    uses:
+      guidance: [role]
+      # shared skills live in the rig-level skills/ folder and are discovered at launch;
+      # role-only skills are declared under resources.skills
+      skills: [ams-ticket-workflow, release-readiness]
+
+resources:
+  guidance:
+    - id: role
+      path: guidance/role.md
+  skills:
+    - id: release-readiness
+      path: skills/release-readiness
+
+startup:
+  files:
+    - path: guidance/role.md
+      delivery_hint: guidance_merge   # CLAUDE.md for claude-code, AGENTS.md for codex
+      required: true

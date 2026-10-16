@@ -1,0 +1,29 @@
+name: ams-designer
+version: "1.0"
+description: ASDLC AMS Designer - UI/UX and full-stack solution design, impact analysis
+
+defaults:
+  runtime: claude-code
+  lifecycle:
+    execution_mode: interactive_resident
+    compaction_strategy: default-compaction
+    restore_policy: resume_if_possible
+
+profiles:
+  default:
+    uses:
+      guidance: [role]
+      # shared skills live in the rig-level skills/ folder and are discovered at launch;
+      # role-only skills are declared under resources.skills
+      skills: [ams-ticket-workflow, openapi-contract, ui-design-system, solution-design]
+
+resources:
+  guidance:
+    - id: role
+      path: guidance/role.md
+
+startup:
+  files:
+    - path: guidance/role.md
+      delivery_hint: guidance_merge   # CLAUDE.md for claude-code, AGENTS.md for codex
+      required: true

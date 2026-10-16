@@ -1,0 +1,32 @@
+name: ams-qa
+version: "1.0"
+description: ASDLC AMS QA - Playwright automation, regression and sign-off
+
+defaults:
+  runtime: claude-code
+  lifecycle:
+    execution_mode: interactive_resident
+    compaction_strategy: default-compaction
+    restore_policy: resume_if_possible
+
+profiles:
+  default:
+    uses:
+      guidance: [role]
+      # shared skills live in the rig-level skills/ folder and are discovered at launch;
+      # role-only skills are declared under resources.skills
+      skills: [ams-ticket-workflow, openapi-contract, test-strategy, playwright-e2e]
+
+resources:
+  guidance:
+    - id: role
+      path: guidance/role.md
+  skills:
+    - id: playwright-e2e
+      path: skills/playwright-e2e
+
+startup:
+  files:
+    - path: guidance/role.md
+      delivery_hint: guidance_merge   # CLAUDE.md for claude-code, AGENTS.md for codex
+      required: true
